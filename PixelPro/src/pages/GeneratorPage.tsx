@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { generateCode } from "@/services/mockAI";
 import { toast } from "sonner";
 import { MultiFrameworkPreview } from "@/components/MultiFrameworkPreview";
+import { ComponentModal } from "@/components/ComponentModal";
 
 const GeneratorPage = () => {
   // State for the prompt input
@@ -40,7 +41,7 @@ const GeneratorPage = () => {
   // State for generated code output
   const [generatedCode, setGeneratedCode] =
   useState<Record<Framework, string> | null>(null);
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Loading state while generating
   const [isLoading, setIsLoading] = useState(false);
@@ -175,10 +176,12 @@ const GeneratorPage = () => {
                 <Loader />
               ) : generatedCode ? (
                 // Show code preview when code is generated
-               <CodePreview
-  code={generatedCode[framework]}
-  framework={framework}
-/>
+               <div onDoubleClick={() => setIsModalOpen(true)}>
+  <CodePreview
+    code={generatedCode[framework]}
+    framework={framework}
+  />
+</div>
               ) : (
                 // Empty state
                 <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -207,6 +210,13 @@ const GeneratorPage = () => {
           </p>
         </div>
       </footer>
+      {generatedCode && (
+  <ComponentModal
+    open={isModalOpen}
+    code={generatedCode[framework]}
+    onClose={() => setIsModalOpen(false)}
+  />
+)}
     </div>
   );
 };
