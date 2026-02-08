@@ -185,10 +185,12 @@ const GeneratorPage = () => {
                 <Loader />
               ) : generatedCode ? (
                 // Show code preview when code is generated
-               <CodePreview
-  code={generatedCode[framework]}
-  framework={framework}
-/>
+               <div onDoubleClick={() => setIsModalOpen(true)}>
+  <CodePreview
+    code={generatedCode[framework]}
+    framework={framework}
+  />
+</div>
               ) : (
                 // Empty state
                 <div className="flex flex-col items-center justify-center py-16 text-center">
