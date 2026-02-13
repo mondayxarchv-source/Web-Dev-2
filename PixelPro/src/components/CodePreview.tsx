@@ -9,6 +9,7 @@ import { Check, Copy, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ExportDropdown }  from "./ExportDropdown"; // [1] Import the new component
+import useKeyboardShortcuts from "@/hooks/useKeyboardShortcuts";
 
 interface CodePreviewProps {
   code: string;
@@ -18,7 +19,7 @@ interface CodePreviewProps {
 export const CodePreview = ({ code, framework }: CodePreviewProps) => {
   const [copied, setCopied] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
-
+  const [selectedLines, setSelectedLines] = useState<Set<number>>(new Set());
 
   const handleCopy = async () => {
   try {
@@ -36,6 +37,29 @@ export const CodePreview = ({ code, framework }: CodePreviewProps) => {
   } catch (err) {
     toast.error("Failed to copy code");
   }
+};
+
+  const handleCopySelectedLines = async () => {
+  if (selectedLines.size === 0) {
+    toast.error("No lines selected");
+    return;
+  }
+
+  const selectedCode = Array.from(selectedLines)
+    .sort((a, b) => a - b)
+    .map(i => codeLines[i])
+    .join("\n");
+
+  try {
+    await navigator.clipboard.writeText(selectedCode);
+    toast.success("Selected lines copied!");
+  } catch {
+    toast.error("Failed to copy selected lines");
+  }
+};
+
+  const clearSelection = () => {
+  setSelectedLines(new Set());
 };
 
 
@@ -61,6 +85,25 @@ export const CodePreview = ({ code, framework }: CodePreviewProps) => {
   }
 };
 
+  const codeLines = code.split("\n");
+const toggleLineSelection = (lineNumber: number) => {
+  setSelectedLines(prev => {
+    const updated = new Set(prev);
+    if (updated.has(lineNumber)) {
+      updated.delete(lineNumber);
+    } else {
+      updated.add(lineNumber);
+    }
+    return updated;
+  });
+};
+
+  useKeyboardShortcuts({
+  onGenerate: () => {},
+  onCopy: handleCopy,
+  onClear: clearSelection,
+});
+
   return (
     <div className="animate-fade-in-up">
       <div className="flex items-center justify-between mb-3">
@@ -75,7 +118,15 @@ export const CodePreview = ({ code, framework }: CodePreviewProps) => {
         {/* [2] Grouped Actions: Copy and Export */}
         <div className="flex items-center gap-2">
           <ExportDropdown code={code} framework={framework} /> {/* Added framework prop here */}
-          
+          <Button
+  variant="outline"
+  size="sm"
+  onClick={handleCopySelectedLines}
+  disabled={selectedLines.size === 0}
+>
+  Copy Selected
+</Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -96,9 +147,11 @@ export const CodePreview = ({ code, framework }: CodePreviewProps) => {
     </span>
   ) : (
     <span className="flex items-center gap-2">
-      <Copy className="w-4 h-4" />
-      Copy
-    </span>
+  <Copy className="w-4 h-4" />
+  Copy
+  <span className="text-xs opacity-60">(Ctrl + C)</span>
+</span>
+
   )}
 </>
 
@@ -121,16 +174,35 @@ export const CodePreview = ({ code, framework }: CodePreviewProps) => {
         
         <div className="relative">
           <pre className="p-4 overflow-x-auto code-scrollbar max-h-[400px]">
-  <code
-    className={`language-${getPrismLanguage()} text-sm font-mono leading-relaxed`}
-    dangerouslySetInnerHTML={{
-      __html: Prism.highlight(
-        code,
-        Prism.languages[getPrismLanguage()],
-        getPrismLanguage()
-      ),
-    }}
-  />
+  <code className={`language-${getPrismLanguage()} text-sm font-mono`}>
+  {codeLines.map((line, index) => {
+    const highlighted = Prism.highlight(
+      line || " ",
+      Prism.languages[getPrismLanguage()],
+      getPrismLanguage()
+    );
+
+    const isSelected = selectedLines.has(index);
+
+    return (
+      <div
+        key={index}
+        onClick={() => toggleLineSelection(index)}
+        className={`flex cursor-pointer px-2 rounded
+          ${isSelected ? "bg-primary/20" : "hover:bg-secondary/40"}
+        `}
+      >
+        <span className="select-none w-10 text-right pr-4 text-muted-foreground">
+          {index + 1}
+        </span>
+        <span
+          dangerouslySetInnerHTML={{ __html: highlighted || "&nbsp;" }}
+        />
+      </div>
+    );
+  })}
+</code>
+
 </pre>
         </div>
       </div>

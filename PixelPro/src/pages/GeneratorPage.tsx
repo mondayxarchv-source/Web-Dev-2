@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { MultiFrameworkPreview } from "@/components/MultiFrameworkPreview";
 import { HistorySidebar } from "@/components/HistorySidebar";
 import { useComponentHistory } from "@/hooks/useComponentHistory";
+import useKeyboardShortcuts from "@/hooks/useKeyboardShortcuts";
 
 const GeneratorPage = () => {
   // State for the prompt input
@@ -83,6 +84,18 @@ const GeneratorPage = () => {
       setIsLoading(false);
     }
   };
+
+  const handleClear = () => {
+  setPrompt("");
+  setGeneratedCode(null);
+  toast.info("Cleared");
+};
+
+  useKeyboardShortcuts({
+  onGenerate: handleGenerate,
+  onCopy: () => {}, // handled in CodePreview
+  onClear: handleClear,
+});
 
   return (
     <div className="min-h-screen bg-background">
@@ -166,15 +179,17 @@ const GeneratorPage = () => {
               {/* Generate button */}
               <div className="flex items-end">
                 <Button
-                  variant="generate"
-                  size="lg"
-                  className="w-full"
-                  onClick={handleGenerate}
-                  disabled={isLoading || !prompt.trim()}
-                >
-                  <Sparkles className="w-5 h-5" />
-                  {isLoading ? "Generating..." : "Generate Component"}
-                </Button>
+  variant="generate"
+  size="lg"
+  className="w-full"
+  onClick={handleGenerate}
+  disabled={isLoading || !prompt.trim()}
+>
+  <Sparkles className="w-5 h-5" />
+  {isLoading ? "Generating..." : "Generate Component"}
+  <span className="ml-2 text-xs opacity-70">(Ctrl + Enter)</span>
+</Button>
+
               </div>
             </div>
 
